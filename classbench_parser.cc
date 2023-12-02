@@ -23,18 +23,20 @@ class ClassBenchLine {
 		uint16_t second_hex_2;
 
 		ClassBenchLine(std::string line) {
-			printf(line);
+			std::cout << line;
 		}
 };
 
-public ClassBenchLine[] parseClassBenchFile(std::string filename) {
+ClassBenchLine parseClassBenchFile(std::string filename) {
 	std::ifstream cbfile (filename);
 	std::string cb_string;
 
 	if (cbfile.isopen()) {
 		cbfile >> cb_string;
-		printf(cb_string);
+		return ClassBenchLine(cb_string);
 	}
+
+	return null;
 }
 
 int main(int argc, char ** argv)
