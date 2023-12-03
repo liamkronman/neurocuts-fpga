@@ -54,8 +54,8 @@ ipPair parseIpString(string ipString) {
 		ips = ips.substr(dot+1, ips.length());
 	}
 
-	ipPair = {ip_int, stoi(ipw)};
-	return ipPair;
+	ipPair result = {ip_int, stoi(ipw)};
+	return result;
 }
 
 ClassBenchLine parseClassBenchFile(string filename) {
@@ -77,8 +77,12 @@ ClassBenchLine parseClassBenchFile(string filename) {
 			cbfile >> hx2;
 			cb_string = ip1 + " " + ip2 + " " + p1a + " " + p1b + " " + p2a + " " + p2b + " " + hx1 + " " + hx2;
 
-			cout << parseIpString(ip1.substr(1, ip1.length())) << endl;
-			cout << parseIpString(ip2) << endl;
+			ipPair ip1_pair = parseIpString(ip1.substr(1, ip1.length()));
+			ipPair ip2_pair = parseIpString(ip2);
+			cout << ip1_pair.ip << endl;
+			cout << ip1_pair.ip_width << endl;
+			cout << ip2_pair.ip << endl;
+			cout << ip2_pair.ip_width << endl;
 
 			return ClassBenchLine(cb_string);
 		}
