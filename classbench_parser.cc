@@ -5,6 +5,17 @@
 
 using namespace std;
 
+
+struct ipPair{
+	uint32_t ip;
+	uint16_t ip_width;
+};
+
+struct intPair{
+	uint16_t v1;
+	uint16_t v2;
+};
+
 class ClassBenchLine {
 	public:
 		uint32_t ip_1;
@@ -48,25 +59,25 @@ class CBLNode {
 
 	public:
 		CBLNode(ClassBenchLine* value) {
-			this.next = nullptr;
-			this.value = value;
+			this->next = nullptr;
+			this->value = value;
 		}
 
 		ClassBenchLine get(int idx) {
 			if (idx == 0) {
-				return *this.value;
+				return *this->value;
 			} else {
-				return this.next->get(idx-1);
+				return this->next->get(idx-1);
 			}
 		}
 
 		CBLNode* add(ClassBenchLine* value) {
-			if (this.next == nullptr) {
+			if (this->next == nullptr) {
 				CBLNode newNode = new CBLNode(value);
-				this.next = &newNode;
-				return this.next;
+				this->next = &newNode;
+				return this->next;
 			} else {
-				return this.next->add(value);
+				return this->next->add(value);
 			}
 		}
 
@@ -74,19 +85,9 @@ class CBLNode {
 			if (i == 0) {
 				return this;
 			} else {
-				return this.next->tail(i-1);
+				return this->next->tail(i-1);
 			}
 		}
-}
-
-struct ipPair{
-	uint32_t ip;
-	uint16_t ip_width;
-};
-
-struct intPair{
-	uint16_t v1;
-	uint16_t v2;
 };
 
 ipPair parseIpString(string ipString) {
