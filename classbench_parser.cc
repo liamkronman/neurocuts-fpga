@@ -63,9 +63,9 @@ class CBLNode {
 			this->value = value;
 		}
 
-		ClassBenchLine get(int idx) {
+		ClassBenchLine* get(int idx) {
 			if (idx == 0) {
-				return *this->value;
+				return this->value;
 			} else {
 				return this->next->get(idx-1);
 			}
@@ -73,8 +73,8 @@ class CBLNode {
 
 		CBLNode* add(ClassBenchLine* value) {
 			if (this->next == nullptr) {
-				CBLNode newNode = new CBLNode(value);
-				this->next = &newNode;
+				CBLNode* newNode = new CBLNode(value);
+				this->next = newNode;
 				return this->next;
 			} else {
 				return this->next->add(value);
@@ -115,10 +115,10 @@ intPair parseHexPair(string hexPairString) {
 	return result;
 }
 
-CBLNode parseClassBenchFile(string filename) {
+CBLNode* parseClassBenchFile(string filename) {
 	ifstream cbfile (filename);
 	string cb_string;
-	CBLNode resultHead = new CBLNode(nullptr);
+	CBLNode* resultHead = new CBLNode(nullptr);
 	CBLNode* mrn = resultHead;
 
 	if (cbfile.is_open()) {
@@ -144,8 +144,8 @@ CBLNode parseClassBenchFile(string filename) {
 			intPair hex1_pair = parseHexPair(hx1);
 			intPair hex2_pair = parseHexPair(hx2);
 
-			ClassBenchLine cbl = new ClassBenchLine(ip1_pair, ip2_pair, port1_pair, port2_pair, hex1_pair, hex2_pair);
-			mrn = mrn->add(&cbl);
+			ClassBenchLine* cbl = new ClassBenchLine(ip1_pair, ip2_pair, port1_pair, port2_pair, hex1_pair, hex2_pair);
+			mrn = mrn->add(cbl);
 		}
 	}
 
