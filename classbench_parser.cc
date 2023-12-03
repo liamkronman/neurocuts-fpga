@@ -32,11 +32,24 @@ ClassBenchLine parseClassBenchFile(std::string filename) {
 	std::string cb_string;
 
 	if (cbfile.isopen()) {
-		cbfile >> cb_string;
-		return ClassBenchLine(cb_string);
+		while (cbfile) {
+			std::string ip1, ip2, p1a, p1b, p2a, p2b, hx1, hx2, _; 
+			cbfile >> ip1;
+			cbfile >> ip2;
+			cbfile >> p1a;
+			cbfile >> _;
+			cbfile >> p1b;
+			cbfile >> p2a;
+			cbfile >> _;
+			cbfile >> p2b;
+			cbfile >> hx1;
+			cbfile >> hx2;
+			cb_string = ip1 + " " + ip2 + " " + p1a + " " + p1b + " " + p2a + " " + p2b + " " + hx1 + " " + hx2;
+			return ClassBenchLine(cb_string);
+		}
 	}
 
-	return null;
+	return ClassBenchLine(cb_string);
 }
 
 int main(int argc, char ** argv)
