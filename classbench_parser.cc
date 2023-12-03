@@ -49,7 +49,7 @@ class ClassBenchLine {
 			this->first_hex_2 = hex2.v1;
 			this->second_hex_2 = hex2.v2;
 
-			cout << ip1.ip << " " << ip1.ip_width << " " << ip2.ip << " " << ip1.ip_width << " " << port1.v1 << " " << port1.v2 << " " << port2.v1 << " " << port2.v2 << " " << hex1.v1 << " " << hex1.v2 << " " << hex2.v1 << " " << hex2.v2 << " " << endl;
+			//cout << ip1.ip << " " << ip1.ip_width << " " << ip2.ip << " " << ip1.ip_width << " " << port1.v1 << " " << port1.v2 << " " << port2.v1 << " " << port2.v2 << " " << hex1.v1 << " " << hex1.v2 << " " << hex2.v1 << " " << hex2.v2 << " " << endl;
 		}
 };
 
@@ -158,5 +158,6 @@ CBLNode* parseClassBenchFile(string filename) {
 
 int main(int argc, char ** argv)
 {
+	// example usage
     parseClassBenchFile("classbench/acl2_1k");
 }
