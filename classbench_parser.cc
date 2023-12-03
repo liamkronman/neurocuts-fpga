@@ -71,9 +71,9 @@ ClassBenchLine parseClassBenchFile(string filename) {
 }
 
 ipPair parseIpString(string ipString) {
-	int slash = ip.find("/");
-	string ips = ip.substr(0, slash) + ".";
-	string ipw = ip.substr(slash+1, ip.length());
+	int slash = ipString.find("/");
+	string ips = ipString.substr(0, slash) + ".";
+	string ipw = ipString.substr(slash+1, ipString.length());
 
 	uint32_t ip_int = 0;
 	for (int dot = ips.find("."); dot != -1; dot = ips.find(".")) {
