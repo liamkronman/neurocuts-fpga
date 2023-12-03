@@ -137,6 +137,8 @@ CBLNode* parseClassBenchFile(string filename) {
 			cbfile >> hx1;
 			cbfile >> hx2;
 
+			if (!cbfile) {break;}
+
 			ipPair ip1_pair = parseIpString(ip1.substr(1, ip1.length()));
 			ipPair ip2_pair = parseIpString(ip2);
 
