@@ -31,7 +31,7 @@ ClassBenchLine parseClassBenchFile(std::string filename) {
 	std::ifstream cbfile (filename);
 	std::string cb_string;
 
-	if (cbfile.isopen()) {
+	if (cbfile.is_open()) {
 		while (cbfile) {
 			std::string ip1, ip2, p1a, p1b, p2a, p2b, hx1, hx2, _; 
 			cbfile >> ip1;
