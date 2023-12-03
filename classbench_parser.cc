@@ -17,8 +17,8 @@ class ClassBenchLine {
 		uint16_t min_port_2;
 		uint16_t max_port_2;
 
-		uint8_t first_hex_1;
-		uint8_t second_hex_1;
+		uint16_t first_hex_1;
+		uint16_t second_hex_1;
 		uint16_t first_hex_2;
 		uint16_t second_hex_2;
 
@@ -29,15 +29,10 @@ class ClassBenchLine {
 
 struct ipPair{
 	uint32_t ip;
-	uint8_t ip_width;
+	uint16_t ip_width;
 };
 
-struct int8Pair{
-	uint8_t v1;
-	uint8_t v2;
-};
-
-struct int16Pair{
+struct intPair{
 	uint16_t v1;
 	uint16_t v2;
 };
@@ -55,6 +50,15 @@ ipPair parseIpString(string ipString) {
 	}
 
 	ipPair result = {ip_int, stoi(ipw)};
+	return result;
+}
+
+intPair parseHexPair(string hexPairString) {
+	int slash = hexPairString.find("/");
+	string firstHex = hexPairString.substr(0, slash);
+	string secondHex = hexPairString.substr(slash+1, slash.length());
+
+	intPair result = {stoul(firstHex, nullptr, 16), stoul(secondHex, nullptr, 16)};
 	return result;
 }
 
@@ -79,10 +83,17 @@ ClassBenchLine parseClassBenchFile(string filename) {
 
 			ipPair ip1_pair = parseIpString(ip1.substr(1, ip1.length()));
 			ipPair ip2_pair = parseIpString(ip2);
-			cout << ip1_pair.ip << endl;
-			cout << ip1_pair.ip_width << endl;
-			cout << ip2_pair.ip << endl;
-			cout << ip2_pair.ip_width << endl;
+
+			intPair port1_pair = {stoi(p1a), stoi(p1b)};
+			intPair port2_pair = {stoi(p2a), stoi(p2b)};
+
+			intPair hex1_pair = parseHexPair(hx1);
+			intPair hex2_pair = parseHexPair(hx2);
+
+			cout << hex1_pair.v1 << endl;
+			cout << hex1_pair.v2 << endl;
+			cout << hex2_pair.v1 << endl;
+			cout << hex2_pair.v2 << endl;
 
 			return ClassBenchLine(cb_string);
 		}
