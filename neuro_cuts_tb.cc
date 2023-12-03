@@ -4,6 +4,7 @@
 #include <random>
 #include <iostream>
 #include "Vneuro_cuts.h"
+#include "classbench_parser.h"
 
 using NeuroCutsPtr = std::unique_ptr<Vneuro_cuts>;
 
@@ -18,20 +19,20 @@ void Init(NeuroCutsPtr& neuro_cuts) {
     neuro_cuts->a = 0;
 }
 
-bool TestCase(NeuroCutsPtr& neuro_cuts) {
+bool test_classbench(NeuroCutsPtr& neuro_cuts, std::vector<ClassBenchLine> const& classbench)
+{
     std::cout << "[out:" << int(neuro_cuts->b) << ']' << std::endl; 
     return true;
 }
 
 int main(int argc, char ** argv)
 {
-    std::cout << "Starting...\n";
     Verilated::commandArgs(argc, argv);
+    auto classbench = parse_classbench(std::string{argv[1]});
     auto neuro_cuts = std::make_unique<Vneuro_cuts>();
     Init(neuro_cuts);
-
     while (!Verilated::gotFinish()) {
-        if (!TestCase(neuro_cuts)) {
+        if (!test_classbench(neuro_cuts, classbench)) {
             return -1;
         }
     }
