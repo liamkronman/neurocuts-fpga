@@ -42,6 +42,22 @@ struct int16Pair{
 	uint16_t v2;
 };
 
+ipPair parseIpString(string ipString) {
+	int slash = ipString.find("/");
+	string ips = ipString.substr(0, slash) + ".";
+	string ipw = ipString.substr(slash+1, ipString.length());
+
+	uint32_t ip_int = 0;
+	for (int dot = ips.find("."); dot != -1; dot = ips.find(".")) {
+		string ippart = ips.substr(0, dot);
+		ip_int = (ip_int << 8) + stoi(ippart);
+		ips = ips.substr(dot+1, ips.length());
+	}
+
+	ipPair = {ip_int, stoi(ipw)};
+	return ipPair;
+}
+
 ClassBenchLine parseClassBenchFile(string filename) {
 	ifstream cbfile (filename);
 	string cb_string;
@@ -68,22 +84,6 @@ ClassBenchLine parseClassBenchFile(string filename) {
 		}
 	}
 	return ClassBenchLine(cb_string);
-}
-
-ipPair parseIpString(string ipString) {
-	int slash = ipString.find("/");
-	string ips = ipString.substr(0, slash) + ".";
-	string ipw = ipString.substr(slash+1, ipString.length());
-
-	uint32_t ip_int = 0;
-	for (int dot = ips.find("."); dot != -1; dot = ips.find(".")) {
-		string ippart = ips.substr(0, dot);
-		ip_int = (ip_int << 8) + stoi(ippart);
-		ips = ips.substr(dot+1, ips.length());
-	}
-
-	ipPair = {ip_int, stoi(ipw)};
-	return ipPair;
 }
 
 int main(int argc, char ** argv)
