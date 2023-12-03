@@ -34,20 +34,20 @@ class ClassBenchLine {
 		uint16_t second_hex_2;
 
 		ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair port2, intPair hex1, intPair hex2) {
-			this.ip_1 = ip1.ip;
-			this.ip_width_1 = ip1.ip_width;
-			this.ip_2 = ip2.ip;
-			this.ip_width_2 = ip2.ip_width;
+			this->ip_1 = ip1.ip;
+			this->ip_width_1 = ip1.ip_width;
+			this->ip_2 = ip2.ip;
+			this->ip_width_2 = ip2.ip_width;
 
-			this.min_port_1 = port1.v1;
-			this.max_port_1 = port1.v2;
-			this.min_port_2 = port2.v1;
-			this.max_port_2 = port2.v2;
+			this->min_port_1 = port1.v1;
+			this->max_port_1 = port1.v2;
+			this->min_port_2 = port2.v1;
+			this->max_port_2 = port2.v2;
 
-			this.first_hex_1 = hex1.v1;
-			this.second_hex_1 = hex1.v2;
-			this.first_hex_2 = hex2.v1;
-			this.second_hex_2 = hex2.v2;
+			this->first_hex_1 = hex1.v1;
+			this->second_hex_1 = hex1.v2;
+			this->first_hex_2 = hex2.v1;
+			this->second_hex_2 = hex2.v2;
 		}
 };
 
