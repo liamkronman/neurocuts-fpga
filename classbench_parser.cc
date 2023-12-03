@@ -149,7 +149,7 @@ CBLNode* parseClassBenchFile(string filename) {
 		}
 	}
 
-	return resultHead.tail(1);
+	return resultHead->tail(1);
 }
 
 int main(int argc, char ** argv)
