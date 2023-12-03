@@ -9,10 +9,12 @@ neuro_cuts: neuro_cuts_tb.cc neuro_cuts.sv Makefile
 
 classbench: classbench_parser.o
 	@echo "classbench_parser"
-	g++ -o classbench_parser classbench_parser.o
+	g++ -o classbench_parser obj_dir/classbench_parser.o
+	@mv classbench_parser obj_dir/classbench_parser
 
 classbench.o: classbench_parser.cc
 	g++ -c classbench_parser.cc
+	@mv classbench_parser.o obj_dir/classbench_parser.o
 
 .PHONY: clean
 clean:
