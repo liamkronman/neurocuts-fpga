@@ -16,20 +16,18 @@ struct intPair{
 
 class ClassBenchLine {
 	public:
-		uint32_t ip_1;
-		uint8_t ip_width_1;
-		uint32_t ip_2;
-		uint8_t ip_width_2;
+		uint32_t src_ip;
+		uint8_t src_ip_mask;
+		uint32_t dst_ip;
+		uint8_t dst_ip_mask;
 
-		uint16_t min_port_1;
-		uint16_t max_port_1;
-		uint16_t min_port_2;
-		uint16_t max_port_2;
+		uint16_t src_port_begin;
+		uint16_t src_port_end;
+		uint16_t dst_port_start;
+		uint16_t dst_port_end;
 
-		uint16_t first_hex_1;
-		uint16_t second_hex_1;
-		uint16_t first_hex_2;
-		uint16_t second_hex_2;
+		uint16_t protocol;
+		uint16_t protocol_mask;
 
 		ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair port2, intPair hex1, intPair hex2) {
 			this->ip_1 = ip1.ip;
