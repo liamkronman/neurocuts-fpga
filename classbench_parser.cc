@@ -34,10 +34,11 @@ intPair parseHexPair(string hexPairString) {
 	return result;
 }
 
-valueRange<uint32_t> maskToRange(uint32_t value, uint16_t mask_int) {
+template<typename T>
+valueRange<T> maskToRange(T value, uint16_t mask_int) {
 	uint32_t mask_bits = ((1 << mask_int) - 1) << (32 - mask_int);
-	uint32_t start = value & mask_bits;
-	uint32_t end = start + ~mask_bits + 1;
+	T start = value & mask_bits;
+	T end = start + ~mask_bits + 1;
 	return {start, end};
 }
 
