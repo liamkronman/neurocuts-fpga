@@ -65,6 +65,8 @@ ClassBenchLine::ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair po
 	this->protocol = hex1.v1;
 	this->protocol_mask = hex1.v2;
 	// hex2 ignored
+
+	cout << ip1.ip << " " << ip1.ip_width << " " << ip2.ip << " " << ip1.ip_width << " " << port1.v1 << " " << port1.v2 << " " << port2.v1 << " " << port2.v2 << " " << hex1.v1 << " " << hex1.v2 << " " << endl;
 }
 
 Rule ClassBenchLine::asRule() {
@@ -92,6 +94,7 @@ packet Rule::sample() {
 	uint16_t dst_port = randomRange(this->dst_port);
 	uint16_t protocol = randomRange(this->protocol);
 
+	cout << src_ip << " " << dst_ip << " " << src_port << " " << dst_port << " " << protocol << endl;
 	return {src_ip, dst_ip, src_port, dst_port, protocol};
 }
 
@@ -124,6 +127,12 @@ vector<ClassBenchLine> parse_classbench(string filename) {
 
 			intPair hex1_pair = parseHexPair(hx1);
 			intPair hex2_pair = parseHexPair(hx2);
+
+			ClassBenchLine cbl = ClassBenchLine(ip1_pair, ip2_pair, port1_pair, port2_pair, hex1_pair, hex2_pair);
+			Rule r = cbl.asRule();
+			for (int i = 0; i < 8; i ++) {
+				r.sample();
+			}
 
 			results.push_back(ClassBenchLine(ip1_pair, ip2_pair, port1_pair, port2_pair, hex1_pair, hex2_pair));
 			break;
