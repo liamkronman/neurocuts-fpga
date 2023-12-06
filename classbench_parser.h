@@ -63,5 +63,6 @@ class ClassBenchLine {
 };
 
 vector<ClassBenchLine> parse_classbench(string filename);
+vector<Rule> parse_classbench_to_rule(string filename);
 
 #endif

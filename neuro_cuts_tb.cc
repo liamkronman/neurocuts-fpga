@@ -19,7 +19,7 @@ void Init(NeuroCutsPtr& neuro_cuts) {
     neuro_cuts->a = 0;
 }
 
-bool test_classbench(NeuroCutsPtr& neuro_cuts, std::vector<ClassBenchLine> const& classbench)
+bool test_classbench(NeuroCutsPtr& neuro_cuts, std::vector<Rule> const& rule)
 {
     std::cout << "[out:" << int(neuro_cuts->b) << ']' << std::endl; 
     return true;
@@ -28,11 +28,11 @@ bool test_classbench(NeuroCutsPtr& neuro_cuts, std::vector<ClassBenchLine> const
 int main(int argc, char ** argv)
 {
     Verilated::commandArgs(argc, argv);
-    auto classbench = parse_classbench(std::string{argv[1]});
+    auto rule = parse_classbench_to_rule(std::string{argv[1]});
     auto neuro_cuts = std::make_unique<Vneuro_cuts>();
     Init(neuro_cuts);
     while (!Verilated::gotFinish()) {
-        if (!test_classbench(neuro_cuts, classbench)) {
+        if (!test_classbench(neuro_cuts, rule)) {
             return -1;
         }
     }

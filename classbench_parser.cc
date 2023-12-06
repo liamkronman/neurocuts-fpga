@@ -143,3 +143,15 @@ vector<ClassBenchLine> parse_classbench(string filename) {
 	}
 	return results;
 }
+
+
+vector<Rule> parse_classbench_to_rule(string filename) {
+	vector<ClassBenchLine> cbls = parse_classbench(filename);
+	vector<Rule> results;
+
+	for (ClassBenchLine cbl : cbls) {
+		results.push_back(cbl.asRule());
+	}
+
+	return results;
+}
