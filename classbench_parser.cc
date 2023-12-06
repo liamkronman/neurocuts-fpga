@@ -69,7 +69,7 @@ ClassBenchLine::ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair po
 Rule ClassBenchLine::asRule() {
 	valueRange<uint32_t> src_ip_range = maskToRange(this->src_ip, this->src_ip_mask);
 	valueRange<uint32_t> dst_ip_range = maskToRange(this->dst_ip, this->dst_ip_mask);
-	valueRange<uint32_t> protocol_range = maskToRange(this->protocol, this->protocol_mask);
+	valueRange<uint16_t> protocol_range = maskToRange(this->protocol, this->protocol_mask);
 
 	return Rule(src_ip_range, dst_ip_range, {this->src_port_begin, this->src_port_end},
 		{this->dst_port_begin, this->dst_port_end}, protocol_range);
