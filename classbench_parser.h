@@ -31,6 +31,18 @@ struct packet{
 };
 
 
+class Rule {
+	public:
+		valueRange<uint32_t> src_ip;
+		valueRange<uint32_t> dst_ip;
+		valueRange<uint16_t> src_port;
+		valueRange<uint16_t> dst_port;
+		valueRange<uint16_t> protocol;
+
+		Rule(valueRange<uint32_t> src_ip, valueRange<uint32_t> dst_ip, valueRange<uint16_t> src_port, valueRange<uint16_t> dst_port, valueRange<uint16_t> protocol);
+		packet sample();
+};
+
 class ClassBenchLine {
 	public:
 		uint32_t src_ip;
@@ -48,18 +60,6 @@ class ClassBenchLine {
 
 		ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair port2, intPair hex1, intPair hex2);
 		Rule asRule();
-};
-
-class Rule {
-	public:
-		valueRange<uint32_t> src_ip;
-		valueRange<uint32_t> dst_ip;
-		valueRange<uint16_t> src_port;
-		valueRange<uint16_t> dst_port;
-		valueRange<uint16_t> protocol;
-
-		Rule(valueRange<uint32_t> src_ip, valueRange<uint32_t> dst_ip, valueRange<uint16_t> src_port, valueRange<uint16_t> dst_port, valueRange<uint16_t> protocol);
-		packet sample();
 };
 
 vector<ClassBenchLine> parse_classbench(string filename);
