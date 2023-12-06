@@ -58,7 +58,7 @@ ClassBenchLine::ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair po
 
 	this->src_port_begin = port1.v1;
 	this->src_port_end = port1.v2;
-	this->dst_port_start = port2.v1;
+	this->dst_port_begin = port2.v1;
 	this->dst_port_end = port2.v2;
 
 	this->protocol = hex1.v1;

@@ -52,7 +52,7 @@ class ClassBenchLine {
 
 		uint16_t src_port_begin;
 		uint16_t src_port_end;
-		uint16_t dst_port_start;
+		uint16_t dst_port_begin;
 		uint16_t dst_port_end;
 
 		uint16_t protocol;
