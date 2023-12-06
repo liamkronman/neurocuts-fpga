@@ -3,9 +3,11 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <random>
 #include "classbench_parser.h"
 
 using namespace std;
+
 
 ipPair parseIpString(string ipString) {
 	int slash = ipString.find("/");
@@ -32,10 +34,86 @@ intPair parseHexPair(string hexPairString) {
 	return result;
 }
 
-std::vector<ClassBenchLine> parse_classbench(std::string filename) {
+uint32_t maskIntToBits(uint16_t maskInt) {
+	if (maskInt == 0) {
+		return 0;
+	}
+
+	uint32_t maskBits = 1 << (32 - maskInt);
+	// sign extension
+	for (int i = 1; i <= 16; i *= 2) {
+		maskBits += (maskBits << i);
+	}
+
+	return maskBits;
+}
+
+template<typename T>
+valueRange<T> maskToRange(T value, uint16_t maskInt) {
+	uint32_t maskBits = maskIntToBits(maskInt);
+
+	T start = value & maskBits;
+	T end = start + ~maskBits + 1;
+	return {start, end};
+}
+
+template<typename T>
+T randomRange(valueRange<T> range) {
+	random_device rd;
+	mt19937 rng(rd());
+	uniform_int_distribution<T> uni(range.start, range.end);
+	return uni(rng);
+}
+
+
+ClassBenchLine::ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair port2, intPair hex1, intPair hex2) {
+	this->src_ip = ip1.ip;
+	this->src_ip_mask = ip1.ip_width;
+	this->dst_ip = ip2.ip;
+	this->dst_ip_mask = ip2.ip_width;
+
+	this->src_port_begin = port1.v1;
+	this->src_port_end = port1.v2;
+	this->dst_port_begin = port2.v1;
+	this->dst_port_end = port2.v2;
+
+	this->protocol = hex1.v1;
+	this->protocol_mask = hex1.v2;
+	// hex2 ignored
+}
+
+Rule ClassBenchLine::asRule() {
+	valueRange<uint32_t> src_ip_range = maskToRange(this->src_ip, this->src_ip_mask);
+	valueRange<uint32_t> dst_ip_range = maskToRange(this->dst_ip, this->dst_ip_mask);
+	valueRange<uint16_t> protocol_range = maskToRange(this->protocol, this->protocol_mask);
+
+	return Rule(src_ip_range, dst_ip_range, {this->src_port_begin, this->src_port_end},
+		{this->dst_port_begin, this->dst_port_end}, protocol_range);
+
+}
+
+Rule::Rule(valueRange<uint32_t> src_ip, valueRange<uint32_t> dst_ip, valueRange<uint16_t> src_port, valueRange<uint16_t> dst_port, valueRange<uint16_t> protocol) {
+	this->src_ip = src_ip;
+	this->dst_ip = dst_ip;
+	this->src_port = src_port;
+	this->dst_port = dst_port;
+	this->protocol = protocol;
+}
+
+packet Rule::sample() {
+	uint32_t src_ip = randomRange(this->src_ip);
+	uint32_t dst_ip = randomRange(this->dst_ip);
+	uint16_t src_port = randomRange(this->src_port);
+	uint16_t dst_port = randomRange(this->dst_port);
+	uint16_t protocol = randomRange(this->protocol);
+
+	return {src_ip, dst_ip, src_port, dst_port, protocol};
+}
+
+vector<ClassBenchLine> parse_classbench(string filename) {
 	ifstream cbfile (filename);
 	string cb_string;
-	std::vector<ClassBenchLine> results;
+	vector<ClassBenchLine> results;
 
 	if (cbfile.is_open()) {
 		while (cbfile) {
