@@ -91,10 +91,10 @@ packet Rule::sample() {
 	uint16_t dst_port = randomRange(this->dst_port);
 	uint16_t protocol = randomRange(this->protocol);
 
-	return {src_ip, dst_ip, src_port, dst_port, protocol}
+	return {src_ip, dst_ip, src_port, dst_port, protocol};
 }
 
-vector<ClassBenchLine> parse_classbench(std::string filename) {
+vector<ClassBenchLine> parse_classbench(string filename) {
 	ifstream cbfile (filename);
 	string cb_string;
 	vector<ClassBenchLine> results;
