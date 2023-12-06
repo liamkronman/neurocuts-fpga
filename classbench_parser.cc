@@ -41,7 +41,7 @@ uint32_t maskIntToBits(uint16_t maskInt) {
 
 	uint32_t maskBits = 1 << (32 - maskInt);
 	// sign extension
-	for (int i = 0; i <= 16; i *= 2) {
+	for (int i = 1; i <= 16; i *= 2) {
 		maskBits += (maskBits << i);
 	}
 
