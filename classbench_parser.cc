@@ -125,7 +125,12 @@ vector<ClassBenchLine> parse_classbench(std::string filename) {
 			intPair hex2_pair = parseHexPair(hx2);
 
 			results.push_back(ClassBenchLine(ip1_pair, ip2_pair, port1_pair, port2_pair, hex1_pair, hex2_pair));
+			break;
 		}
 	}
 	return results;
+}
+
+int main(int argc, char** argv) {
+	parse_classbench("classbench/acl2_1k");
 }
