@@ -3,27 +3,36 @@
 #include <memory.h>
 #include <random>
 #include <iostream>
-#include "Vclassifier.h"
+#include "Vneuro_cuts.h"
 #include "classbench_parser.h"
 
-using ClassifierPtr = std::unique_ptr<Vclassifier>;
+using NeuroCutsPtr = std::unique_ptr<Vneuro_cuts>;
 
-void Init(ClassifierPtr& classifier) { }
+int my_random() {
+    static std::random_device dev;
+    static std::mt19937 rng(dev());
+    static std::uniform_int_distribution<unsigned> distribution(1, 6);
+    return distribution(rng);
+}
 
-bool test_classbench(ClassifierPtr& classifier, std::vector<ClassBenchLine> const& classbench)
+void Init(NeuroCutsPtr& neuro_cuts) {
+    neuro_cuts->a = 0;
+}
+
+bool test_classbench(NeuroCutsPtr& neuro_cuts, std::vector<Rule> const& rule)
 {
-    classifier->eval();
+    std::cout << "[out:" << int(neuro_cuts->b) << ']' << std::endl; 
     return true;
 }
 
 int main(int argc, char ** argv)
 {
     Verilated::commandArgs(argc, argv);
-    auto classbench = std::vector<ClassBenchLine>{}; //parse_classbench(std::string{argv[1]});
-    auto classifier = std::make_unique<Vclassifier>();
-    Init(classifier);
+    auto rule = parse_classbench_to_rule(std::string{argv[1]});
+    auto neuro_cuts = std::make_unique<Vneuro_cuts>();
+    Init(neuro_cuts);
     while (!Verilated::gotFinish()) {
-        if (!test_classbench(classifier, classbench)) {
+        if (!test_classbench(neuro_cuts, rule)) {
             return -1;
         }
     }

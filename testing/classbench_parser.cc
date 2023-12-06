@@ -8,6 +8,7 @@
 
 using namespace std;
 
+
 ipPair parseIpString(string ipString) {
 	int slash = ipString.find("/");
 	string ips = ipString.substr(0, slash) + ".";
@@ -48,9 +49,7 @@ uint32_t maskIntToBits(uint16_t maskInt) {
 }
 
 template<typename T>
-valueRange<T> maskToRange(T value, uint16_t maskInt) {
-	uint32_t maskBits = maskIntToBits(maskInt);
-
+valueRange<T> maskToRange(T value, uint32_t maskBits) {
 	T start = value & maskBits;
 	T end = start + ~maskBits + 1;
 	return {start, end};
@@ -58,8 +57,8 @@ valueRange<T> maskToRange(T value, uint16_t maskInt) {
 
 template<typename T>
 T randomRange(valueRange<T> range) {
-	static random_device rd;
-	static mt19937 rng(rd());
+	random_device rd;
+	mt19937 rng(rd());
 	uniform_int_distribution<T> uni(range.start, range.end);
 	return uni(rng);
 }
@@ -82,8 +81,8 @@ ClassBenchLine::ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair po
 }
 
 Rule ClassBenchLine::asRule() {
-	valueRange<uint32_t> src_ip_range = maskToRange(this->src_ip, this->src_ip_mask);
-	valueRange<uint32_t> dst_ip_range = maskToRange(this->dst_ip, this->dst_ip_mask);
+	valueRange<uint32_t> src_ip_range = maskToRange(this->src_ip, maskIntToBits(this->src_ip_mask));
+	valueRange<uint32_t> dst_ip_range = maskToRange(this->dst_ip, maskIntToBits(this->dst_ip_mask));
 	valueRange<uint16_t> protocol_range = maskToRange(this->protocol, this->protocol_mask);
 
 	return Rule(src_ip_range, dst_ip_range, {this->src_port_begin, this->src_port_end},
@@ -142,5 +141,17 @@ vector<ClassBenchLine> parse_classbench(string filename) {
 			results.push_back(ClassBenchLine(ip1_pair, ip2_pair, port1_pair, port2_pair, hex1_pair, hex2_pair));
 		}
 	}
+	return results;
+}
+
+
+vector<Rule> parse_classbench_to_rule(string filename) {
+	vector<ClassBenchLine> cbls = parse_classbench(filename);
+	vector<Rule> results;
+
+	for (ClassBenchLine cbl : cbls) {
+		results.push_back(cbl.asRule());
+	}
+
 	return results;
 }

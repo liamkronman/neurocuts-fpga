@@ -6,23 +6,23 @@
 
 using namespace std;
 
-struct ipPair {
+struct ipPair{
 	uint32_t ip;
 	uint16_t ip_width;
 };
 
-struct intPair {
+struct intPair{
 	uint16_t v1;
 	uint16_t v2;
 };
 
 template<typename T>
-struct valueRange {
+struct valueRange{
 	T start;
 	T end;
 };
 
-struct packet {
+struct packet{
 	uint32_t src_ip;
 	uint32_t dst_ip;
 	uint16_t src_port;
@@ -63,5 +63,6 @@ class ClassBenchLine {
 };
 
 vector<ClassBenchLine> parse_classbench(string filename);
+vector<Rule> parse_classbench_to_rule(string filename);
 
 #endif
