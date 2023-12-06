@@ -49,9 +49,7 @@ uint32_t maskIntToBits(uint16_t maskInt) {
 }
 
 template<typename T>
-valueRange<T> maskToRange(T value, uint16_t maskInt) {
-	uint32_t maskBits = maskIntToBits(maskInt);
-
+valueRange<T> maskToRange(T value, uint32_t maskBits) {
 	T start = value & maskBits;
 	T end = start + ~maskBits + 1;
 	return {start, end};
@@ -83,8 +81,8 @@ ClassBenchLine::ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair po
 }
 
 Rule ClassBenchLine::asRule() {
-	valueRange<uint32_t> src_ip_range = maskToRange(this->src_ip, this->src_ip_mask);
-	valueRange<uint32_t> dst_ip_range = maskToRange(this->dst_ip, this->dst_ip_mask);
+	valueRange<uint32_t> src_ip_range = maskToRange(this->src_ip, maskIntToBits(this->src_ip_mask));
+	valueRange<uint32_t> dst_ip_range = maskToRange(this->dst_ip, maskIntToBits(this->dst_ip_mask));
 	valueRange<uint16_t> protocol_range = maskToRange(this->protocol, this->protocol_mask);
 
 	return Rule(src_ip_range, dst_ip_range, {this->src_port_begin, this->src_port_end},
