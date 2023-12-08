@@ -8,6 +8,9 @@
 
 using namespace std;
 
+const valueRange<uint32_t> FULL_RANGE_32 = {0, numeric_limits<uint32_t>::max()};
+const valueRange<uint16_t> FULL_RANGE_16 = {0, numeric_limits<uint16_t>::max()};
+const uint16_t PROTOCOL_MASK_EXT = 0xFF00;
 
 ipPair parseIpString(string ipString) {
 	int slash = ipString.find("/");
@@ -34,24 +37,28 @@ intPair parseHexPair(string hexPairString) {
 	return result;
 }
 
+
+template<typename T>
+T signExt(T x) {
+	for (int i = 1; i <= 16; i *= 2) {
+		x += (x << i);
+	}
+	return x;
+}
+
 uint32_t maskIntToBits(uint16_t maskInt) {
 	if (maskInt == 0) {
 		return 0;
 	}
 
 	uint32_t maskBits = 1 << (32 - maskInt);
-	// sign extension
-	for (int i = 1; i <= 16; i *= 2) {
-		maskBits += (maskBits << i);
-	}
-
-	return maskBits;
+	return signExt(maskBits);
 }
 
 template<typename T>
 valueRange<T> maskToRange(T value, uint32_t maskBits) {
 	T start = value & maskBits;
-	T end = start + ~maskBits + 1;
+	T end = start + ~maskBits;
 	return {start, end};
 }
 
@@ -63,6 +70,15 @@ T randomRange(valueRange<T> range) {
 	return uni(rng);
 }
 
+template<typename T>
+bool checkRange(valueRange<T> range, T value) {
+	return range.start <= value && range.end >= value;
+}
+
+template<typename T>
+bool rangesEqual(valueRange<T> a, valueRange<T> b) {
+	return a.start == b.start && a.end == b.end;
+}
 
 ClassBenchLine::ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair port2, intPair hex1, intPair hex2) {
 	this->src_ip = ip1.ip;
@@ -83,7 +99,7 @@ ClassBenchLine::ClassBenchLine(ipPair ip1, ipPair ip2, intPair port1, intPair po
 Rule ClassBenchLine::asRule() {
 	valueRange<uint32_t> src_ip_range = maskToRange(this->src_ip, maskIntToBits(this->src_ip_mask));
 	valueRange<uint32_t> dst_ip_range = maskToRange(this->dst_ip, maskIntToBits(this->dst_ip_mask));
-	valueRange<uint16_t> protocol_range = maskToRange(this->protocol, this->protocol_mask);
+	valueRange<uint16_t> protocol_range = maskToRange(this->protocol, this->protocol_mask + PROTOCOL_MASK_EXT);
 
 	return Rule(src_ip_range, dst_ip_range, {this->src_port_begin, this->src_port_end},
 		{this->dst_port_begin, this->dst_port_end}, protocol_range);
@@ -98,7 +114,7 @@ Rule::Rule(valueRange<uint32_t> src_ip, valueRange<uint32_t> dst_ip, valueRange<
 	this->protocol = protocol;
 }
 
-packet Rule::sample() {
+packet Rule::sample() const {
 	uint32_t src_ip = randomRange(this->src_ip);
 	uint32_t dst_ip = randomRange(this->dst_ip);
 	uint16_t src_port = randomRange(this->src_port);
@@ -107,6 +123,23 @@ packet Rule::sample() {
 
 	return {src_ip, dst_ip, src_port, dst_port, protocol};
 }
+
+bool Rule::packetMatches(packet p) {
+	return checkRange(this->src_ip, p.src_ip) &&
+		   checkRange(this->dst_ip, p.dst_ip) &&
+		   checkRange(this->src_port, p.src_port) &&
+		   checkRange(this->dst_port, p.dst_port) &&
+		   checkRange(this->protocol, p.protocol);
+}
+
+bool Rule::equals(Rule* other) {
+	return rangesEqual(this->src_ip, other->src_ip) &&
+		   rangesEqual(this->dst_ip, other->dst_ip) &&
+		   rangesEqual(this->src_port, other->src_port) &&
+		   rangesEqual(this->dst_port, other->dst_port) &&
+		   rangesEqual(this->protocol, other->protocol);
+}
+
 
 vector<ClassBenchLine> parse_classbench(string filename) {
 	ifstream cbfile (filename);
@@ -144,7 +177,6 @@ vector<ClassBenchLine> parse_classbench(string filename) {
 	return results;
 }
 
-
 vector<Rule> parse_classbench_to_rule(string filename) {
 	vector<ClassBenchLine> cbls = parse_classbench(filename);
 	vector<Rule> results;
@@ -154,4 +186,14 @@ vector<Rule> parse_classbench_to_rule(string filename) {
 	}
 
 	return results;
+}
+
+packet generateRandomPacket() {
+	uint32_t src_ip = randomRange(FULL_RANGE_32);
+	uint32_t dst_ip = randomRange(FULL_RANGE_32);
+	uint16_t src_port = randomRange(FULL_RANGE_16);
+	uint16_t dst_port = randomRange(FULL_RANGE_16);
+	uint16_t protocol = randomRange(FULL_RANGE_16);
+
+	return {src_ip, dst_ip, src_port, dst_port, protocol};
 }
