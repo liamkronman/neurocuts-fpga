@@ -728,8 +728,7 @@ class Tree:
         if node.is_partition():
             return sum(self._compute_memory_access(n) for n in node.children)
         else:
-            return 1 + max(
-                self._compute_memory_access(n) for n in node.children)
+            return 1 + max(self._compute_memory_access(n) for n in node.children)
 
     def get_stats(self):
         widths = []
@@ -812,15 +811,16 @@ class Tree:
 
     # TODO: for every node in binary 32-bit number: []
     def generate_nodes(self):
-        nodes = [self.root]
-        while len(nodes) != 0:
-            next_layer_nodes = []
-            for node in nodes:
-                max_children = max(max_children, len(node.children))
-                for child in node.children:
-                    pass
-                next_layer_nodes.extend(node.children)
-            nodes = next_layer_nodes
+        pass
+        #nodes = [self.root]
+        #while len(nodes) != 0:
+        #    next_layer_nodes = []
+        ##    for node in nodes:
+        #        max_children = max(max_children, len(node.children))
+        #        for child in node.children:
+        #            pass
+        #        next_layer_nodes.extend(node.children)
+        #    nodes = next_layer_nodes
 
     def generate_tree_constants(self):
         nodes = [self.root]
@@ -885,7 +885,7 @@ import pickle
 
 if __name__ == "__main__":
     file = "./pickle_trees/fast_acl5_1k_tree.pkl"
-    file = "./pickle_trees/fw4_100k_v0.pkl"
+    #file = "./pickle_trees/fw4_100k_v0.pkl"
     with open(file, "rb") as f:
         tree = pickle.load(f)
     with open("./tree_constants.sv", "w") as f:
@@ -893,7 +893,8 @@ if __name__ == "__main__":
     with open("./rules.txt", "w") as f:
         f.write(tree.generate_rules())
     with open("./nodes.txt", "w") as f:
-        f.write(tree.generate_nodes())
+        pass
+        #f.write(tree.generate_nodes())
 
     print(tree)
     check_classification(tree)
