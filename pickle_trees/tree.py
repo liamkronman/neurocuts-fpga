@@ -235,7 +235,7 @@ class Node:
         result += format(priority, "032b")
         return result
 
-    def as_binary(self, max_rules, max_children, rules):
+    def as_binary(self, mapping, max_rules, max_children, rules):
         result = ""
         if self.is_partition():
             result += "00"
@@ -258,12 +258,12 @@ class Node:
                 result += format(0, f"0{range_width}b")
         result += format(len(self.children), "032b")
         for c in self.children:
-            result += format(c.id, "032b")
+            result += format(mapping[c.id], "032b")
         for i in range(max_children - len(self.children)):
             result += format(0, f"032b")
         if len(result) != range_width * (max_rules +1) + 2 + 64 + max_children * 32:
             print(f"max_r:{max_rules}, max_c:{max_children}, ")
-            print(self.id)
+            print(mapping[self.id])
             raise "ass"
         return result
 
@@ -835,6 +835,7 @@ class Tree:
             nodes = next_layer_nodes
 
     def __str__(self):
+        mapping = self.create_child_mapping()
         result = ""
         nodes = [self.root]
         print("Tree stats:")
@@ -861,14 +862,31 @@ class Tree:
         result += f"max rules: {max_rules}\n"
         return result
 
+    def create_child_mapping(self):
+        mapping = {}
+        i = 0
+        nodes = [self.root]
+        while len(nodes) != 0:
+            next_layer_nodes = []
+            for node in nodes:
+                mapping[node.id] = i
+                i += 1
+                for child in node.children:
+                    pass
+                next_layer_nodes.extend(node.children)
+            nodes = next_layer_nodes
+        return mapping
+
+
     def generate_nodes(self):
+        mapping = self.create_child_mapping()
         total_nodes, total_rules, max_children, max_rules = self.generate_tree_constants()
         result = ""
         nodes = [self.root]
         while len(nodes) != 0:
             next_layer_nodes = []
             for node in nodes:
-                result += node.as_binary(max_rules, max_children, self.rules) + "\n"
+                result += node.as_binary(mapping, max_rules, max_children, self.rules) + "\n"
                 max_children = max(max_children, len(node.children))
                 for child in node.children:
                     pass
