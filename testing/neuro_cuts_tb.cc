@@ -26,7 +26,7 @@ VlWide<4> packPacket(packet p) {
     return {{elt1, elt2, elt3, elt4}};
 }
 
-Rule* unpackRule(VlWide<8> r) {
+Rule unpackRule(VlWide<8> r) {
     // start src ip 33, start src port 17, start dst ip 33, start dst port 17, start protocol 9,
     // last src ip 33, last src port 17, last dst ip 33, last dst port 17, last protocol 9,
     // weight 32 (ignored)
@@ -43,7 +43,7 @@ Rule* unpackRule(VlWide<8> r) {
     uint16_t dst_port_last = r.m_storage[6] & 0xFFFF;
     uint16_t protocol_last = (r.m_storage[6] >> 17) & 0xFF;
 
-    return new Rule({src_ip_start, src_ip_last}, {dst_ip_start, dst_ip_last},
+    return Rule({src_ip_start, src_ip_last}, {dst_ip_start, dst_ip_last},
                     {src_port_start, src_port_last}, {dst_port_start, dst_port_last},
                     {protocol_start, protocol_last});
 }
@@ -87,8 +87,21 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                 std::cout << "Testing randomly sampled packets " << i << std::endl;
             }
 
-            p = (randomInt(0, 1) == 0) ? rules[randomInt(0, numRules-1)].sample() : generateRandomPacket();
+            Rule* expectedMatch = nullptr;
+            while (!expectedMatch) {
+                p = (randomInt(0, 1) == 0) ? rules[randomInt(0, numRules-1)].sample() : generateRandomPacket();
+                for (Rule rule : rules) {
+                    if (rule.packetMatches(p)) {
+                        expectedMatch = &rule;
+                        break;
+                    }
+                }
+            }
             VlWide<4> test = packPacket(p);
+            std::cout << "passing packet:\n";
+            for (int i = 0; i < 4; i++) {
+                std::cout << test.at(0) << std::endl;
+            }
             classifier->packet = test;
             classifier->input_is_valid = 1;
 
@@ -104,11 +117,11 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                 }
 
                 VlWide<8> mrs = classifier->matched_rule_storage;
-                Rule* actual_match = unpackRule(mrs);
+                Rule actual_match = unpackRule(mrs);
 
-                if (expectedMatch != nullptr && !expectedMatch->equals(actual_match)) {
+                if (expectedMatch != nullptr && !expectedMatch->equals(&actual_match)) {
                     std::cout << "failure -- actual: ";
-                    printRule(actual_match);
+                    printRule(&actual_match);
                     std::cout << ", expected: ";
                     printRule(expectedMatch);
                     std::cout << std::endl;

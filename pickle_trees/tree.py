@@ -258,6 +258,7 @@ class Node:
                 result += format(0, f"0{range_width}b")
         result += format(len(self.children), "032b")
         for c in self.children:
+            print(f"child id: {c.id}")
             result += format(c.id, "032b")
         for i in range(max_children - len(self.children)):
             result += format(0, f"032b")
