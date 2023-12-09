@@ -1,23 +1,47 @@
 
-import network_pkg::*
-import utils_pkg::*
+import network_pkg::*;
+
+module compare_bit_range
+#(parameter LENGTH)(
+    input logic[LENGTH-1:0] value,
+    input logic[LENGTH-1:0] first,
+    input logic[LENGTH-1:0] last,
+    output logic is_within
+);
+    assign is_within = (value >= first) && (value < last);
+endmodule
 
 module rule_match(
     input rule_s rule,
     input packet_s packet,
     output logic matched
 );
+    logic prot_match, ip_src_match, port_src_match, ip_dst_match, port_dst_match;
+    packet_s start, last;
+
     always_comb begin
-        packet_s start = rule.start, last = rule.last
-        logic match_src, match_dst, match_protocol
-
-        match_protocol = compare_bits#(PROTOCOL_SIZE)(
-            packet.protocol, start.protocol, last.protocol);
-        match_src = compare_bits#(IP_SIZE)(packet.src.ip, start.src.ip, last.src.ip)
-                    && compare_bits#(PORT_SIZE)(packet.src.port, first.src.port, last.src.port);
-        match_dst = compare_bits#(IP_SIZE)(packet.dst.ip, start.dst.ip, last.dst.ip)
-                    && compare_bits#(PORT_SIZE)(packet.dst.port, first.dst.port, last.dst.port);
-
-        matched = match_protocol && match_src && match_dst
+        start = rule.start;
+        last = rule.last;
+        assign matched = prot_match && ip_src_match && port_src_match && ip_dst_match && port_dst_match;
     end
-endmodule : rule
+    compare_bit_range#(PROTOCOL_SIZE) protocol(
+        .value(packet.protocol), .first(start.protocol), .last(last.protocol),
+        .is_within(prot_match)
+    );
+    compare_bit_range#(IP_SIZE) ip_src(
+        .value(packet.src.ip), .first(start.src.ip), .last(last.src.ip),
+        .is_within(ip_src_match)
+    );
+    compare_bit_range#(PORT_SIZE) port_src(
+        .value(packet.src.port), .first(first.src.port), .last(last.src.port),
+        .is_within(port_src_match)
+    );
+    compare_bit_range#(IP_SIZE) ip_dst(
+        .value(packet.dst.ip), .first(start.dst.ip), .last(last.dst.ip),
+        .is_within(ip_dst_match)
+    );
+    compare_bit_range#(PORT_SIZE) port_dst(
+        .value(packet.dst.port), .first(first.dst.port), .last(last.dst.port),
+        .is_within(port_dst_match)
+    );
+endmodule : rule_match

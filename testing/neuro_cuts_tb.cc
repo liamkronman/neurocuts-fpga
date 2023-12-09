@@ -10,14 +10,22 @@ using ClassifierPtr = std::unique_ptr<Vclassifier>;
 
 void Init(ClassifierPtr& classifier) {
     classifier->reset = 1;
-    classifier->clk ^= 1;
+    classifier->clk = 0;
+    classifier->eval();
+    classifier->clk = 1;
+    classifier->eval();
+    classifier->reset = 0;
 }
 
 bool test_classbench(ClassifierPtr& classifier, std::vector<ClassBenchLine> const& classbench)
 {
-    classifier->reset = 0;
     classifier->clk ^= 1;
-    classifier->eval(); 
+    if (classifier->finish) {
+        std::cout << "finished" << std::endl;
+    }
+    classifier->eval();
+    //if (classifier->clk) // positive edge
+        //std::cout << (int)(classifier->number_of_rules) << std::endl;
     return true;
 }
 

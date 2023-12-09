@@ -196,17 +196,76 @@ class Node:
     def contains(self, packet):
         assert len(packet) == 5, packet
         return self.is_intersect_multi_dimension([
-            packet[0] + 0,  # src ip
+            packet[0] + 0,  # src ip 0
             packet[0] + 1,
-            packet[1] + 0,  # dst ip
+            packet[1] + 0,  # dst ip 2
             packet[1] + 1,
-            packet[2] + 0,  # src port
+            packet[2] + 0,  # src port 4
             packet[2] + 1,
-            packet[3] + 0,  # dst port
+            packet[3] + 0,  # dst port 6
             packet[3] + 1,
-            packet[4] + 0,  # protocol
+            packet[4] + 0,  # protocol 8
             packet[4] + 1
         ])
+    
+
+    def field_as_binary(self, field, num):
+        field = field // 2
+        if field == 0:
+            assert(num & 0x1ffffffff == num)
+            return format(num, '033b')  # src ip
+        if field == 1:
+            assert(num & 0x1ffffffff == num)
+            return format(num, '033b')  # dst ip
+        if field == 2:
+            assert(num & 0x1ffff == num)
+            return format(num, '017b')  # src port
+        if field == 3:
+            assert(num & 0x1ffff == num)
+            return format(num, '017b')  # dst port
+        if field == 4:
+            assert(num & 0x1ff == num)
+            return format(num, '09b')  # protocol
+
+    def range_as_binary(self, ranges, priority):
+        result = ""
+        assert(len(ranges) == 10)
+        for i in [0, 4, 2, 6, 8, 1, 5, 3, 7, 9]:
+            result += self.field_as_binary(i, ranges[i])
+        result += format(priority, "032b")
+        return result
+
+    def as_binary(self, max_rules, max_children, rules):
+        result = ""
+        if self.is_partition():
+            result += "00"
+        elif self.children:
+            result += "01"
+        else:
+            result += "10"
+        result += self.range_as_binary(self.ranges, 0)
+        range_width = len(self.range_as_binary(self.ranges, 0))
+        if self.children:
+            result += format(0, "032b")
+            for i in range(max_rules):
+                result += format(0, f"0{range_width}b")
+        else:
+            # is a leaf
+            result += format(len(self.rules), "032b")
+            for r in self.rules:
+                result += self.range_as_binary(r.ranges, rules.index(r))
+            for i in range(max_rules - len(self.rules)):
+                result += format(0, f"0{range_width}b")
+        result += format(len(self.children), "032b")
+        for c in self.children:
+            result += format(c.id, "032b")
+        for i in range(max_children - len(self.children)):
+            result += format(0, f"032b")
+        if len(result) != range_width * (max_rules +1) + 2 + 64 + max_children * 32:
+            print(f"max_r:{max_rules}, max_c:{max_children}, ")
+            print(self.id)
+            raise "ass"
+        return result
 
     def is_useless(self):
         if not self.children:
@@ -801,26 +860,21 @@ class Tree:
         result += f"max children: {max_children}\n"
         result += f"max rules: {max_rules}\n"
         return result
-    
-    # TODO:
-    def generate_rules(self):
-        result = ""
-        for rule in self.rules:
-            pass
-        return result
 
-    # TODO: for every node in binary 32-bit number: []
     def generate_nodes(self):
-        pass
-        #nodes = [self.root]
-        #while len(nodes) != 0:
-        #    next_layer_nodes = []
-        ##    for node in nodes:
-        #        max_children = max(max_children, len(node.children))
-        #        for child in node.children:
-        #            pass
-        #        next_layer_nodes.extend(node.children)
-        #    nodes = next_layer_nodes
+        total_nodes, total_rules, max_children, max_rules = self.generate_tree_constants()
+        result = ""
+        nodes = [self.root]
+        while len(nodes) != 0:
+            next_layer_nodes = []
+            for node in nodes:
+                result += node.as_binary(max_rules, max_children, self.rules) + "\n"
+                max_children = max(max_children, len(node.children))
+                for child in node.children:
+                    pass
+                next_layer_nodes.extend(node.children)
+            nodes = next_layer_nodes
+        return result
 
     def generate_tree_constants(self):
         nodes = [self.root]
@@ -890,11 +944,8 @@ if __name__ == "__main__":
         tree = pickle.load(f)
     with open("./tree_constants.sv", "w") as f:
         f.write(tree.generate_sv())
-    with open("./rules.txt", "w") as f:
-        f.write(tree.generate_rules())
     with open("./nodes.txt", "w") as f:
-        pass
-        #f.write(tree.generate_nodes())
+        f.write(tree.generate_nodes())
 
     print(tree)
     check_classification(tree)
