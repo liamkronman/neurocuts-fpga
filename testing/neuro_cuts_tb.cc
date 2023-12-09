@@ -69,16 +69,21 @@ void Init(ClassifierPtr& classifier) {
     classifier->reset = 0;
 }
 
-bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
+// return: -1 = success, -2 = more than one failure, other value = in progress, returns i
+int failures, numRules;
+bool new_input;
+packet p;
+int test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules, int i)
 {
-    int failures = 0;
-    int numRules = rules.size();
+    if (i == -1) {
+        failures = 0;
+        numRules = rules.size();
+        new_input = true;
 
-    int i = 0;
-    bool new_input = true;
-    packet p;
+        i = 0;
+    }
 
-    while (i < 10000) {
+    if (i < 10000) {
         classifier->clk ^= 1;
         classifier->eval();
 
@@ -119,9 +124,11 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                 new_input = true;
             }
         }
+
+        return i;
     }
 
-    return failures == 0;
+    return failures == 0 ? -1 : -2;
 }
 
 int main(int argc, char ** argv)
@@ -135,7 +142,15 @@ int main(int argc, char ** argv)
 
     auto classifier = std::make_unique<Vclassifier>();
     Init(classifier);
-    if (!test_classbench(classifier, rules)) {
+
+    int i = -1;
+    while (!Verilated::gotFinish()) {
+        i = test_classbench(classifier, rules, i);
+        if (i < 0) {
+            break;
+        }
+    }
+    if (i == -2) { // indicates failures
         return -1;
     }
 }
