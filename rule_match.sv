@@ -33,7 +33,7 @@ module rule_match(
         .is_within(ip_src_match)
     );
     compare_bit_range#(PORT_SIZE) port_src(
-        .value(packet.src.port), .first(first.src.port), .last(last.src.port),
+        .value(packet.src.port), .first(start.src.port), .last(last.src.port),
         .is_within(port_src_match)
     );
     compare_bit_range#(IP_SIZE) ip_dst(
@@ -41,7 +41,7 @@ module rule_match(
         .is_within(ip_dst_match)
     );
     compare_bit_range#(PORT_SIZE) port_dst(
-        .value(packet.dst.port), .first(first.dst.port), .last(last.dst.port),
+        .value(packet.dst.port), .first(start.dst.port), .last(last.dst.port),
         .is_within(port_dst_match)
     );
 endmodule : rule_match

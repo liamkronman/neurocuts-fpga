@@ -3,15 +3,90 @@ import network_pkg::*;
 import tree_constants::*;
 import node_pkg::*;
 
+module leaf_match(
+    input node_s node,
+    input packet_s packet,
+    output logic[31:0] rule_index,
+    output logic found_rule
+);
+    logic matched[MAX_RULES_PER_NODE-1:0];
+    genvar i;
+    generate
+        for (i = 0; i < MAX_RULES_PER_NODE; i = i + 1) begin
+            logic idx_matches;
+            rule_match my_match(
+                .rule(node.rules[i]), .packet(packet),
+                .matched(idx_matches)
+            );
+            assign matched[i] = idx_matches && i < node.rule_count;
+        end
+    endgenerate
+    always_comb begin
+        found_rule = 0;
+        rule_index = 0;
+        for (int j = 0; j < MAX_RULES_PER_NODE; j++) begin
+            if (matched[j]) begin
+                rule_index = j;
+                found_rule = 1;
+                break;  // Exit the loop once the first match is found
+            end
+        end
+    end
+endmodule
+
+
+module cut_match(
+    input logic[$bits(node_s)-1:0] node_data [0:TOTAL_NODES-1],
+    input node_s node,
+    input packet_s packet,
+    output logic[31:0] child_index,
+    output logic found_child
+);
+    logic matched[MAX_CHILDREN_PER_NODE-1:0];
+    genvar i;
+    generate
+        for (i = 0; i < MAX_CHILDREN_PER_NODE; i = i + 1) begin
+            logic idx_matches;
+            node_s node = node_data[node.children[i]];
+            rule_match my_match(
+                .rule(node.range), .packet(packet),
+                .matched(idx_matches)
+            );
+            assign matched[i] = idx_matches && i < node.child_count;
+        end
+    endgenerate
+    always_comb begin
+        found_child = 0;
+        child_index = 0;
+        for (int j = 0; j < MAX_CHILDREN_PER_NODE; j++) begin
+            if (matched[j]) begin
+                child_index = j;
+                found_child = 1;
+                break;  // Exit the loop once the first match is found
+            end
+        end
+    end
+endmodule
+
+// if ready is true, pass in a packet and a single cycle of valid.
+// ready will turn off, and when it's matched, ready_to_process will be true again
 module classifier(
     input logic clk,
     input logic reset,
-    output logic finish
+    input logic[$bits(packet_s)-1:0] packet,
+    input logic input_is_valid,
+
+    output logic ready_to_process,
+    output logic[$bits(rule_s)-1:0] matched_rule_storage
 );
     // 32 bits large enough to hold index of any node
-    logic [$bits(node_s)-1:0] node_data [0:TOTAL_NODES-1];
-    logic[31:0] current_node;
-    node_s node;
+    logic[$bits(node_s)-1:0] node_data [0:TOTAL_NODES-1];
+    logic[$bits(packet_s)-1:0] internal_packet;
+    logic[31:0] current_node_idx;
+    logic processing;
+    node_s current_node;
+    rule_s matched_rule;
+    assign matched_rule_storage = matched_rule;
 
     initial begin
         $display("Size of node_s in rule: %d", $bits(rule_s));
@@ -20,28 +95,57 @@ module classifier(
         $display("initialized node_data");
     end
     
+    logic[31:0] rule_index;
+    logic found_rule;
+    leaf_match my_leaf_match(
+        .node(current_node), .packet(internal_packet),
+        .rule_index(rule_index), .found_rule(found_rule)
+    );
+    
+    logic[31:0] child_index;
+    logic found_child;
+    cut_match my_cut_match(
+        .node_data(node_data),
+        .node(current_node), .packet(internal_packet),
+        .child_index(child_index), .found_child(found_child)
+    );
+
     // 370 iterations cause we need to see that were invalid
     always_ff @(posedge clk) begin
         if (reset) begin
-            current_node <= 0;
-            finish <= 0;
+            ready_to_process <= 1;
+            processing <= 0;
+            matched_rule <= 0;
         end
         else begin
-            if (current_node == TOTAL_NODES - 1) begin
-                finish <= 1;
-                current_node <= 0;
+            if (input_is_valid && ready_to_process) begin
+                internal_packet <= packet;
+                current_node_idx <= 0;
+                processing <= 1;
+                ready_to_process <= 0;
+                matched_rule.weight <= {31{1'b1}};
             end
-            else begin
-                current_node <= current_node + 1;
+            // will start cycle after requested to process
+            if (processing) begin
+                $display("node:%d, rule_count:%d", current_node, current_node.rule_count);
+                if (current_node.node_type == PARTITION) begin
+                    $display("found partition uhoh");
+                end
+                else if (current_node.node_type == CUT) begin
+                    if (found_child) begin
+                        current_node_idx <= child_index;
+                        current_node <= node_data[child_index];
+                    end
+                end
+                else if (current_node.node_type == LEAF) begin
+                    if (found_rule && current_node.rules[rule_index].weight < matched_rule.weight) begin
+                        matched_rule <= current_node.rules[rule_index];
+                    end
+                end
+                else begin
+                    $display("Error: This should be unreachable");
+                end
             end
-            $display("node:%d, rule_count:%d", current_node, node.rule_count);
-            node <= node_data[current_node];
-        end
-    end
-
-    always_comb begin
-        if (finish) begin
-            $finish();
         end
     end
 endmodule
