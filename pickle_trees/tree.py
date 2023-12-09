@@ -258,7 +258,6 @@ class Node:
                 result += format(0, f"0{range_width}b")
         result += format(len(self.children), "032b")
         for c in self.children:
-            print(f"child id: {c.id}")
             result += format(c.id, "032b")
         for i in range(max_children - len(self.children)):
             result += format(0, f"032b")
@@ -849,13 +848,13 @@ class Tree:
             for node in nodes:
                 if len(node.children) == 0:
                     max_rules = max(max_rules, len(node.rules))
-                #result += "%d; %s; %s; [" % (node.id, str(node.action),
-                #                             str(node.ranges))
+                result += "%d; %s; %s; [" % (node.id, str(node.action),
+                                             str(node.ranges))
                 max_children = max(max_children, len(node.children))
                 for child in node.children:
-                    pass
-                    # result += str(child.id) + " "
-                #result += "]\n"
+                    
+                     result += str(child.id) + " "
+                result += "]\n"
                 next_layer_nodes.extend(node.children)
             nodes = next_layer_nodes
         result += f"max children: {max_children}\n"
@@ -922,11 +921,12 @@ def check_classification(tree):
                 0, 2**32 - 1), random.randint(0, 2**16 - 1),
                       random.randint(0, 2**16 - 1), random.randint(
                           0, 2**5 - 1))
+        packet = [126692207, 126711968, 2773, 24469, 1]
         expected_match = None
         for r in tree.rules:
             if r.matches(packet):
                 expected_match = r
-                break            
+                break
         actual_match = tree.match(packet)
         expected_match = expected_match and tree.rules.index(expected_match)
         actual_match = actual_match and tree.rules.index(actual_match)

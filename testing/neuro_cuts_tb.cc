@@ -5,6 +5,7 @@
 #include <iostream>
 #include "Vclassifier.h"
 #include "classbench_parser.h"
+#include <immintrin.h>
 
 using ClassifierPtr = std::unique_ptr<Vclassifier>;
 
@@ -18,12 +19,12 @@ int randomInt(int min, int max) {
 VlWide<4> packPacket(packet p) {
     //src ip 33, src port 17, dst ip 33, dst port 17, protocol 9
 
-    uint32_t elt1 = p.src_ip;
-    uint32_t elt2 = (p.src_port << 1) + (p.dst_ip << 18);
-    uint32_t elt3 = (p.dst_ip >> 14) + (p.dst_port << 19);
-    uint32_t elt4 = (p.dst_port >> 13) + (p.protocol << 4);
+    uint32_t elt4 = p.src_ip;
+    uint32_t elt3 = (p.dst_ip   << 18) | (p.src_port << 1);
+    uint32_t elt2 = (p.dst_port << 19) | (p.dst_ip << 14);
+    uint32_t elt1 = (p.protocol << 4)  | (p.dst_port << 13);
 
-    return {{elt1, elt2, elt3, elt4}};
+    return {{_bswap (elt1), _bswap (elt2), _bswap (elt3), _bswap(elt4)}};
 }
 
 Rule unpackRule(VlWide<8> r) {
@@ -97,12 +98,17 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                     }
                 }
             }
-            VlWide<4> test = packPacket(p);
-            std::cout << "passing packet:\n";
-            for (int i = 0; i < 4; i++) {
-                std::cout << test.at(0) << std::endl;
-            }
-            classifier->packet = test;
+            classifier->src_ip = p.src_ip;
+            classifier->dst_ip = p.dst_ip;
+            classifier->src_port = p.src_port;
+            classifier->dst_port = p.dst_port;
+            classifier->protocol = p.protocol;
+            std::cout << "processing packet:\n";
+            std::cout << "src_ip:" << p.src_ip << '\n';
+            std::cout << "dst_ip:" << p.dst_ip << '\n';
+            std::cout << "src_port:" << p.src_port << '\n';
+            std::cout << "dst_port:" << p.dst_port << '\n';
+            std::cout << "prot:" << p.protocol << '\n';
             classifier->input_is_valid = 1;
 
             new_input = false;
