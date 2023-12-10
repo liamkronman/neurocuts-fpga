@@ -74,7 +74,7 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
     packet p;
     Rule* expectedMatch;
 
-    while (i < 100) {
+    while (i < 10000) {
         classifier->clk ^= 1;
         classifier->eval();
 

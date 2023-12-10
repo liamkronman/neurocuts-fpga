@@ -22,13 +22,19 @@ module stack#(
     end
 
     always_ff@ (posedge clk) begin
+        //$display("stack top: %d)", top);
+        $write("stack: {");
+        for (int i = 0; i < top; i++) begin
+            $write("%d:%d,", i, stack_memory[i]);
+        end
+        $display("}");
         if (reset) begin
             top <= 0;
             just_popped <= 0;
         end
         else if (push && !full) begin
             top <= top + 1;
-            stack_memory[top + 1] <= data_in;
+            stack_memory[top] <= data_in;
             just_popped <= 0;
         end
         else if (pop && !empty) begin

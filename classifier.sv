@@ -208,25 +208,36 @@ module classifier(
             if (processing) begin
                 if (is_pushing) begin
                     if (1+pushing_index <= MAX_CHILDREN_PER_NODE-current_node.child_count) begin
+                        //$display("didnt push at node: %d", current_node.children[pushing_index]);
                         node_push <= 0;
                         is_pushing <= 0;
                     end
                     else begin
-                        node_stack_in <= node_data[current_node.children[pushing_index]];
+                        //$display("Pushing node: %d", current_node.children[pushing_index]);
+                        node_stack_in <= current_node.children[pushing_index];
                         pushing_index <= pushing_index - 1;
+                        if (1+pushing_index <= MAX_CHILDREN_PER_NODE-current_node.child_count) begin
+                            node_push <= 0;
+                        end
                     end
                 end
                 else begin
                     if (wants_new_node) begin
                         if (node_just_popped) begin
+                            //$display("Going to process: %d", node_stack_out);
                             node_pop <= 0;
                             current_node_idx <= node_stack_out;
                             current_node <= node_data[node_stack_out];
+                            wants_new_node <= 0;
                         end
                         else if (processed_all_nodes) begin
                             ready_to_process <= 1;
                             wants_new_node <= 0;
                             processing <= 0;
+                        end
+                        // we already popped. only do it once
+                        else if (node_pop) begin 
+                            node_pop <= 0;
                         end
                         else begin
                             node_pop <= 1;
@@ -245,9 +256,11 @@ module classifier(
                         //$display("child end^\n");
                         if (current_node.node_type == PARTITION) begin
                             // we can assume it has at least 1 child
+                            $display("At partition:");
                             is_pushing <= 1;
+                            $display("Pushing node: %d", current_node.children[MAX_CHILDREN_PER_NODE - 1]);
                             pushing_index <= MAX_CHILDREN_PER_NODE - 2;
-                            node_stack_in <= MAX_CHILDREN_PER_NODE - 1;
+                            node_stack_in <= current_node.children[MAX_CHILDREN_PER_NODE - 1];
                             node_push <= 1;
                             wants_new_node <= 1;
                         end
@@ -266,6 +279,9 @@ module classifier(
                                 current_node_idx <= current_node.children[child_index];
                                 current_node <= node_data[current_node.children[child_index]];
                                 $display("Next Node Index: %d", current_node_idx);
+                            end
+                            else begin
+                                wants_new_node <= 1;
                             end
                         end
                         else if (current_node.node_type == LEAF) begin
