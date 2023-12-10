@@ -74,7 +74,7 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
     packet p;
     Rule* expectedMatch;
 
-    while (i < 10000) {
+    while (i < 100) {
         classifier->clk ^= 1;
         classifier->eval();
 
@@ -95,7 +95,9 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
             }
             sendInputPacket(classifier, p);
             classifier->input_is_valid = 1;
-
+            classifier->clk ^= 1;
+            classifier->eval();
+            classifier->input_is_valid = 0;
             new_input = false;
         } else {
             if (classifier->ready_to_process) {
@@ -108,6 +110,13 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                     printRule(expectedMatch);
                     std::cout << std::endl;
                     failures += 1;
+                }
+                else{
+                    std::cout << "success -- actual: ";
+                    printRule(&actual_match);
+                    std::cout << ", expected: ";
+                    printRule(expectedMatch);
+                    std::cout << std::endl;
                 }
 
                 i += 1;
@@ -125,7 +134,7 @@ int main(int argc, char ** argv)
     std::vector<Rule> rules = std::vector<Rule>();
     for (int i = 1; i < argc; i++) {
         std::vector<Rule> new_rules = parse_classbench_to_rule(std::string{argv[i]});
-        rules.append_range(new_rules);
+        rules.insert(rules.begin(), new_rules.begin(), new_rules.end());
     }
 
     // auto p = rules[0].sample();

@@ -7,8 +7,8 @@ module stack#(
     input logic reset,
     input logic push,
     input logic pop,
-    input logic data_in[DATA_WIDTH-1:0],
-    output logic data_out[DATA_WIDTH-1:0],
+    input logic[DATA_WIDTH-1:0] data_in,
+    output logic[DATA_WIDTH-1:0] data_out,
     output logic just_popped,
     output logic full,
     output logic empty

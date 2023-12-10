@@ -97,7 +97,7 @@ module classifier(
     output logic[31:0] last_dst_ip,
     output logic[15:0] last_src_port,
     output logic[15:0] last_dst_port,
-    output logic[7:0] last_protocol,
+    output logic[7:0] last_protocol
 );
     // 32 bits large enough to hold index of any node
     logic[$bits(node_s)-1:0] node_data [0:TOTAL_NODES-1];
@@ -113,7 +113,7 @@ module classifier(
         .clk(clk), .reset(reset), .just_popped(node_just_popped),
         .data_in(node_stack_in), .data_out(node_stack_out),
         .push(node_push), .pop(node_pop),
-        .empty(processed_all_nodes)
+        .empty(processed_all_nodes), .full()
     );
     logic[31:0] current_node_idx;
     node_s current_node;
@@ -129,17 +129,17 @@ module classifier(
     logic[31:0] pushing_index;
 
     always_comb begin
-        matched_rule.first.src.ip = first_src_ip;
-        matched_rule.first.dst.ip = first_dst_ip;
-        matched_rule.first.src.port = first_src_port;
-        matched_rule.first.dst.port = first_dst_port;
-        matched_rule.first.protocol = first_protocol;
+        first_src_ip = matched_rule.start.src.ip;
+        first_dst_ip = matched_rule.start.dst.ip;
+        first_src_port = matched_rule.start.src.port;
+        first_dst_port = matched_rule.start.dst.port;
+        first_protocol = matched_rule.start.protocol;
 
-        matched_rule.last.src.ip = last_src_ip;
-        matched_rule.last.dst.ip = last_dst_ip;
-        matched_rule.last.src.port = last_src_port;
-        matched_rule.last.dst.port = last_dst_port;
-        matched_rule.last.protocol = last_protocol;
+        last_src_ip = matched_rule.last.src.ip - 1;
+        last_dst_ip = matched_rule.last.dst.ip - 1;
+        last_src_port = matched_rule.last.src.port - 1;
+        last_dst_port = matched_rule.last.dst.port - 1;
+        last_protocol = matched_rule.last.protocol - 1;
 
         packet.src.ip = src_ip;
         packet.src.port = src_port;
@@ -194,6 +194,7 @@ module classifier(
                 node_pop <= 0;
                 node_push <= 0;
                 wants_new_node <= 0;
+                matched_rule <= 0;
                 matched_rule.weight <= {31{1'b1}};
                 print_packet(packet);
             end
@@ -218,6 +219,8 @@ module classifier(
                         end
                         else if (processed_all_nodes) begin
                             ready_to_process <= 1;
+                            wants_new_node <= 0;
+                            processing <= 0;
                         end
                         else begin
                             node_pop <= 1;
