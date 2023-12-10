@@ -87,28 +87,60 @@ module classifier(
     //out
     output logic ready_to_process,
     // output rule
-    input logic[31:0] first_src_ip,
-    input logic[31:0] first_dst_ip,
-    input logic[15:0] first_src_port,
-    input logic[15:0] first_dst_port,
-    input logic[7:0] first_protocol,
+    output logic[31:0] first_src_ip,
+    output logic[31:0] first_dst_ip,
+    output logic[15:0] first_src_port,
+    output logic[15:0] first_dst_port,
+    output logic[7:0] first_protocol,
     
-    input logic[31:0] last_src_ip,
-    input logic[31:0] last_dst_ip,
-    input logic[15:0] last_src_port,
-    input logic[15:0] last_dst_port,
-    input logic[7:0] last_protocol,
+    output logic[31:0] last_src_ip,
+    output logic[31:0] last_dst_ip,
+    output logic[15:0] last_src_port,
+    output logic[15:0] last_dst_port,
+    output logic[7:0] last_protocol,
 );
     // 32 bits large enough to hold index of any node
     logic[$bits(node_s)-1:0] node_data [0:TOTAL_NODES-1];
     logic[$bits(packet_s)-1:0] internal_packet;
+
+    // current state
+    logic node_push, node_pop;
+    logic[31:0] node_stack_out;
+    logic[31:0] node_stack_in;
+    logic node_just_popped;
+    logic processed_all_nodes;
+    stack#(TOTAL_NODES, $bits(logic[31:0])) node_stack(
+        .clk(clk), .reset(reset), .just_popped(node_just_popped),
+        .data_in(node_stack_in), .data_out(node_stack_out),
+        .push(node_push), .pop(node_pop),
+        .empty(processed_all_nodes)
+    );
     logic[31:0] current_node_idx;
-    logic processing;
     node_s current_node;
+    
+    // input/output aliases
     rule_s matched_rule;
     packet_s packet;
+    // flags
+    logic processing;
+    logic wants_new_node;
+    // pushing state
+    logic is_pushing;
+    logic[31:0] pushing_index;
+
     always_comb begin
-        matched_rule_storage = matched_rule;
+        matched_rule.first.src.ip = first_src_ip;
+        matched_rule.first.dst.ip = first_dst_ip;
+        matched_rule.first.src.port = first_src_port;
+        matched_rule.first.dst.port = first_dst_port;
+        matched_rule.first.protocol = first_protocol;
+
+        matched_rule.last.src.ip = last_src_ip;
+        matched_rule.last.dst.ip = last_dst_ip;
+        matched_rule.last.src.port = last_src_port;
+        matched_rule.last.dst.port = last_dst_port;
+        matched_rule.last.protocol = last_protocol;
+
         packet.src.ip = src_ip;
         packet.src.port = src_port;
         packet.dst.ip = dst_ip;
@@ -158,51 +190,88 @@ module classifier(
                 current_node_idx <= 0;
                 current_node <= node_data[0];
                 processing <= 1;
+                is_pushing <= 0;
+                node_pop <= 0;
+                node_push <= 0;
+                wants_new_node <= 0;
                 matched_rule.weight <= {31{1'b1}};
                 print_packet(packet);
             end
             // will start cycle after requested to process
             if (processing) begin
-                $display("node:%d, rule_count:%d, child_count:%d", current_node_idx, current_node.rule_count, current_node.child_count);
-                //print_node(current_node);
-                //print_packet(internal_packet);
-                //$display("\nchildren start:");
-                for (int i = 0; i < current_node.child_count; i++) begin
-                    node_s child = node_data[current_node.children[MAX_CHILDREN_PER_NODE-1-i]];
-                    //print_rule(child.range);
-                    //print_node(node_data[current_node.children[]]);
-                end
-                //$display("child end^\n");
-                if (current_node.node_type == PARTITION) begin
-                    $display("found partition uhoh");
-                end
-                else if (current_node.node_type == CUT) begin
-                    $display("At cut node:");
-                    //$display("At a cut node. Found Child: %d", found_child);
-                    //$display("Child min: %d", child_min);
-                    //$display("Child min+1: %d", child_min+1);
-                    $write("matched: {");
-                    for (int i = 0; i < MAX_CHILDREN_PER_NODE; i++) begin
-                        $write("%0b", cut_matches[i]);
+                if (is_pushing) begin
+                    if (1+pushing_index <= MAX_CHILDREN_PER_NODE-current_node.child_count) begin
+                        node_push <= 0;
+                        is_pushing <= 0;
                     end
-                    $display("}");
-                    if (found_child) begin
-                        //$display("Child index: %d", child_index);
-                        current_node_idx <= current_node.children[child_index];
-                        current_node <= node_data[current_node.children[child_index]];
-                        $display("Next Node Index: %d", current_node_idx);
-                    end
-                end
-                else if (current_node.node_type == LEAF) begin
-                    $display("At leaf node:");
-                    if (found_rule && current_node.rules[rule_index].weight < matched_rule.weight) begin
-                        $display("found new rule:");
-                        print_rule(current_node.rules[rule_index]);
-                        matched_rule <= current_node.rules[rule_index];
+                    else begin
+                        node_stack_in <= node_data[current_node.children[pushing_index]];
+                        pushing_index <= pushing_index - 1;
                     end
                 end
                 else begin
-                    $display("Error: This should be unreachable");
+                    if (wants_new_node) begin
+                        if (node_just_popped) begin
+                            node_pop <= 0;
+                            current_node_idx <= node_stack_out;
+                            current_node <= node_data[node_stack_out];
+                        end
+                        else if (processed_all_nodes) begin
+                            ready_to_process <= 1;
+                        end
+                        else begin
+                            node_pop <= 1;
+                        end
+                    end
+                    else begin
+                        $display("node:%d, rule_count:%d, child_count:%d", current_node_idx, current_node.rule_count, current_node.child_count);
+                        //print_node(current_node);
+                        //print_packet(internal_packet);
+                        //$display("\nchildren start:");
+                        for (int i = 0; i < current_node.child_count; i++) begin
+                            //node_s child = node_data[current_node.children[MAX_CHILDREN_PER_NODE-1-i]];
+                            //print_rule(child.range);
+                            //print_node(node_data[current_node.children[]]);
+                        end
+                        //$display("child end^\n");
+                        if (current_node.node_type == PARTITION) begin
+                            // we can assume it has at least 1 child
+                            is_pushing <= 1;
+                            pushing_index <= MAX_CHILDREN_PER_NODE - 2;
+                            node_stack_in <= MAX_CHILDREN_PER_NODE - 1;
+                            node_push <= 1;
+                            wants_new_node <= 1;
+                        end
+                        else if (current_node.node_type == CUT) begin
+                            $display("At cut node:");
+                            //$display("At a cut node. Found Child: %d", found_child);
+                            //$display("Child min: %d", child_min);
+                            //$display("Child min+1: %d", child_min+1);
+                            $write("matched: {");
+                            for (int i = 0; i < MAX_CHILDREN_PER_NODE; i++) begin
+                                $write("%0b", cut_matches[i]);
+                            end
+                            $display("}");
+                            if (found_child) begin
+                                //$display("Child index: %d", child_index);
+                                current_node_idx <= current_node.children[child_index];
+                                current_node <= node_data[current_node.children[child_index]];
+                                $display("Next Node Index: %d", current_node_idx);
+                            end
+                        end
+                        else if (current_node.node_type == LEAF) begin
+                            $display("At leaf node:");
+                            if (found_rule && current_node.rules[rule_index].weight < matched_rule.weight) begin
+                                $display("found new rule:");
+                                print_rule(current_node.rules[rule_index]);
+                                matched_rule <= current_node.rules[rule_index];
+                            end
+                            wants_new_node <= 1;
+                        end
+                        else begin
+                            $display("Error: This should be unreachable");
+                        end
+                    end
                 end
             end
         end
