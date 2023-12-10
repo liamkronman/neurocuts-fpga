@@ -122,7 +122,11 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
 int main(int argc, char ** argv)
 {
     Verilated::commandArgs(argc, argv);
-    auto rules = parse_classbench_to_rule(std::string{argv[1]});
+    std::vector<Rule> rules = std::vector<Rule>();
+    for (int i = 1; i < argc; i++) {
+        std::vector<Rule> new_rules = parse_classbench_to_rule(std::string{argv[i]});
+        rules.append_range(new_rules);
+    }
 
     // auto p = rules[0].sample();
     // std::cout << p.src_ip << " " << p.dst_ip << " " << p.src_port << " " << p.dst_port << " " << p.protocol << std::endl;
