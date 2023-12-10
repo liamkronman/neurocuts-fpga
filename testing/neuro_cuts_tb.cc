@@ -9,6 +9,8 @@
 
 using ClassifierPtr = std::unique_ptr<Vclassifier>;
 
+const int TESTING_ITERATIONS = 10000;
+
 int randomInt(int min, int max) {
     random_device rd;
     mt19937 rng(rd());
@@ -69,14 +71,18 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
     int failures = 0;
     int numRules = rules.size();
 
+    double current_cycles = 0;
+    double average_cycles = 0;
+
     int i = 0;
     bool new_input = true;
     packet p;
     Rule* expectedMatch;
 
-    while (i < 10000) {
+    while (i < TESTING_ITERATIONS) {
         classifier->clk ^= 1;
         classifier->eval();
+        current_cycles += 1;
 
         if (new_input) {
             if (i % 100 == 0) {
@@ -93,11 +99,14 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                     }
                 }
             }
+
             sendInputPacket(classifier, p);
             classifier->input_is_valid = 1;
             classifier->clk ^= 1;
             classifier->eval();
             classifier->input_is_valid = 0;
+
+            current_cycles = 1;
             new_input = false;
         } else {
             if (classifier->ready_to_process) {
@@ -119,12 +128,15 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                     std::cout << std::endl;
                 }
 
+                average_cycles += current_cycles / TESTING_ITERATIONS;
+
                 i += 1;
                 new_input = true;
             }
         }
     }
 
+    std::cout << "Average cycles per match: " << average_cycles << std::endl;
     return failures == 0;
 }
 
