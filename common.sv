@@ -34,7 +34,7 @@ package network_pkg;
                  rule.start.src.ip, rule.start.src.port, rule.start.dst.ip, rule.start.dst.port, rule.start.protocol);
         
         // Print last packet
-        $display("Last Packet - src IP: %0d, src Port: %0d, dst IP: %0d, dst Port: %0d, Protocol: %0d",
+        $display("Last Packet - src IP: %d, src Port: %d, dst IP: %d, dst Port: %d, Protocol: %d",
                  rule.last.src.ip, rule.last.src.port, rule.last.dst.ip, rule.last.dst.port, rule.last.protocol);
 
         // Print weight

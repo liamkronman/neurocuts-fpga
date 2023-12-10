@@ -7,9 +7,12 @@ module leaf_match(
     input node_s node,
     input packet_s packet,
     output logic[31:0] rule_index,
-    output logic found_rule
+    output logic found_rule,
+    output logic matched[MAX_RULES_PER_NODE-1:0]
 );
-    logic matched[MAX_RULES_PER_NODE-1:0];
+    logic actual_matched[MAX_RULES_PER_NODE-1:0];
+    logic [31:0] min;
+    assign min = (MAX_RULES_PER_NODE-1) - node.rule_count;
     genvar i;
     generate
         for (i = 0; i < MAX_RULES_PER_NODE; i = i + 1) begin
@@ -18,15 +21,16 @@ module leaf_match(
                 .rule(node.rules[i]), .packet(packet),
                 .matched(idx_matches)
             );
-            assign matched[i] = idx_matches && i < node.rule_count;
+            assign actual_matched[i] = idx_matches && ((i+1) > (min+1));
+            assign matched[i] = actual_matched[i];
         end
     endgenerate
     always_comb begin
         found_rule = 0;
         rule_index = 0;
         for (int j = 0; j < MAX_RULES_PER_NODE; j++) begin
-            if (matched[j]) begin
-                rule_index = j;
+            if (actual_matched[MAX_RULES_PER_NODE-1-j]) begin
+                rule_index = MAX_RULES_PER_NODE-1-j;
                 found_rule = 1;
                 break;  // Exit the loop once the first match is found
             end
@@ -160,9 +164,11 @@ module classifier(
     
     logic[31:0] rule_index;
     logic found_rule;
+    logic rule_matches[MAX_RULES_PER_NODE-1:0];
     leaf_match my_leaf_match(
         .node(current_node), .packet(internal_packet),
-        .rule_index(rule_index), .found_rule(found_rule)
+        .rule_index(rule_index), .found_rule(found_rule),
+        .matched(rule_matches)
     );
     
     logic[31:0] child_index;
@@ -263,7 +269,16 @@ module classifier(
                             end
                         end
                         else if (current_node.node_type == LEAF) begin
+                            $write("matched: {");
+                            for (int i = 0; i < MAX_RULES_PER_NODE; i++) begin
+                                $write("%0b", rule_matches[i]);
+                            end
+                            $display("}");
                             $display("At leaf node:");
+                            for (int i = 0; i < current_node.rule_count; i++) begin
+                                rule_s rule = current_node.rules[MAX_RULES_PER_NODE-1-i];
+                                print_rule(rule);
+                            end
                             if (found_rule && current_node.rules[rule_index].weight < matched_rule.weight) begin
                                 $display("found new rule:");
                                 print_rule(current_node.rules[rule_index]);
