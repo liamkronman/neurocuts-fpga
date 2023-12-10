@@ -155,9 +155,9 @@ module classifier(
     node_s root;
     assign root = node_data[0];
     initial begin
-        $display("Size of packet_s in bits: %d", $bits(packet_s));
-        $display("Size of rule_s in bits: %d", $bits(rule_s));
-        $display("Size of node_s in bits: %d", $bits(node_s));
+        //$display("Size of packet_s in bits: %d", $bits(packet_s));
+        //$display("Size of rule_s in bits: %d", $bits(rule_s));
+        //$display("Size of node_s in bits: %d", $bits(node_s));
         $readmemb("./nodes.txt", node_data);
         $display("initialized node_data");
     end
@@ -244,7 +244,7 @@ module classifier(
                         end
                     end
                     else begin
-                        $display("node:%d, rule_count:%d, child_count:%d", current_node_idx, current_node.rule_count, current_node.child_count);
+                        //$display("node:%d, rule_count:%d, child_count:%d", current_node_idx, current_node.rule_count, current_node.child_count);
                         //print_node(current_node);
                         //print_packet(internal_packet);
                         //$display("\nchildren start:");
@@ -256,16 +256,16 @@ module classifier(
                         //$display("child end^\n");
                         if (current_node.node_type == PARTITION) begin
                             // we can assume it has at least 1 child
-                            $display("At partition:");
+                            //$display("At partition:");
                             is_pushing <= 1;
-                            $display("Pushing node: %d", current_node.children[MAX_CHILDREN_PER_NODE - 1]);
+                            //$display("Pushing node: %d", current_node.children[MAX_CHILDREN_PER_NODE - 1]);
                             pushing_index <= MAX_CHILDREN_PER_NODE - 2;
                             node_stack_in <= current_node.children[MAX_CHILDREN_PER_NODE - 1];
                             node_push <= 1;
                             wants_new_node <= 1;
                         end
                         else if (current_node.node_type == CUT) begin
-                            $display("At cut node:");
+                            //$display("At cut node:");
                             //$display("At a cut node. Found Child: %d", found_child);
                             //$display("Child min: %d", child_min);
                             //$display("Child min+1: %d", child_min+1);
@@ -273,12 +273,12 @@ module classifier(
                             for (int i = 0; i < MAX_CHILDREN_PER_NODE; i++) begin
                                 $write("%0b", cut_matches[i]);
                             end
-                            $display("}");
+                            //$display("}");
                             if (found_child) begin
                                 //$display("Child index: %d", child_index);
                                 current_node_idx <= current_node.children[child_index];
                                 current_node <= node_data[current_node.children[child_index]];
-                                $display("Next Node Index: %d", current_node_idx);
+                                //$display("Next Node Index: %d", current_node_idx);
                             end
                             else begin
                                 wants_new_node <= 1;
@@ -289,21 +289,21 @@ module classifier(
                             for (int i = 0; i < MAX_RULES_PER_NODE; i++) begin
                                 $write("%0b", rule_matches[i]);
                             end
-                            $display("}");
-                            $display("At leaf node:");
+                            //$display("}");
+                            //$display("At leaf node:");
                             for (int i = 0; i < current_node.rule_count; i++) begin
                                 rule_s rule = current_node.rules[MAX_RULES_PER_NODE-1-i];
                                 print_rule(rule);
                             end
                             if (found_rule && current_node.rules[rule_index].weight < matched_rule.weight) begin
-                                $display("found new rule:");
+                                //$display("found new rule:");
                                 print_rule(current_node.rules[rule_index]);
                                 matched_rule <= current_node.rules[rule_index];
                             end
                             wants_new_node <= 1;
                         end
                         else begin
-                            $display("Error: This should be unreachable");
+                            //$display("Error: This should be unreachable");
                         end
                     end
                 end
