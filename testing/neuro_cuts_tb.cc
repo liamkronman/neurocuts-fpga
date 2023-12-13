@@ -9,7 +9,7 @@
 
 using ClassifierPtr = std::unique_ptr<Vclassifier>;
 
-const int TESTING_ITERATIONS = 10000;
+const int TESTING_ITERATIONS = 500;
 
 int randomInt(int min, int max) {
     random_device rd;
@@ -78,11 +78,12 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
     bool new_input = true;
     packet p;
     Rule* expectedMatch;
+    std::vector<double> samples;
 
     while (i < TESTING_ITERATIONS) {
         classifier->clk ^= 1;
         classifier->eval();
-        current_cycles += 1;
+        current_cycles += 0.5;
 
         if (new_input) {
             if (i % 100 == 0) {
@@ -100,13 +101,19 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                 }
             }
 
+            current_cycles = 0;
+            // get it into low state
+            if (classifier->clk == 1) {
+                classifier->clk = 0;
+                classifier->eval();
+            }
             sendInputPacket(classifier, p);
             classifier->input_is_valid = 1;
             classifier->clk ^= 1;
             classifier->eval();
             classifier->input_is_valid = 0;
+            current_cycles += 1;
 
-            current_cycles = 1;
             new_input = false;
         } else {
             if (classifier->ready_to_process) {
@@ -129,7 +136,7 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
                 }
 
                 average_cycles += current_cycles / TESTING_ITERATIONS;
-
+                samples.push_back(current_cycles);
                 i += 1;
                 new_input = true;
             }
@@ -137,6 +144,13 @@ bool test_classbench(ClassifierPtr& classifier, std::vector<Rule> const& rules)
     }
 
     std::cout << "Average cycles per match: " << average_cycles << std::endl;
+    double min_cycle = 1000000, max_cycle = 0;
+    for (int i = 0; i < samples.size(); i++) {
+        if (samples[i] < min_cycle) min_cycle = samples[i];
+        if (samples[i] > max_cycle) max_cycle = samples[i];
+    }
+    std::cout << "min: " << min_cycle << std::endl;
+    std::cout << "max: " << max_cycle << std::endl;
     return failures == 0;
 }
 

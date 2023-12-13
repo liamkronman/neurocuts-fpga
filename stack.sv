@@ -23,11 +23,11 @@ module stack#(
 
     always_ff@ (posedge clk) begin
         //$display("stack top: %d)", top);
-        $write("stack: {");
+        /*$write("stack: {");
         for (int i = 0; i < top; i++) begin
             $write("%d:%d,", i, stack_memory[i]);
         end
-        $display("}");
+        $display("}");*/
         if (reset) begin
             top <= 0;
             just_popped <= 0;

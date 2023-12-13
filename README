@@ -1,0 +1,7 @@
+
+
+download pickle tree to ./pickle_trees/
+from the main directory, run:
+>python3 ./pickle_trees/tree.py ./pickle_trees/[your_tree].pkl
+>make clean && make
+>./classifier ./classbench/[rule_set_for_tree]

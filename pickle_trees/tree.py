@@ -957,8 +957,10 @@ def check_classification(tree):
 import pickle
 
 if __name__ == "__main__":
-    file = "./pickle_trees/fast_acl5_1k_tree.pkl"
-    #file = "./pickle_trees/fw4_100k_v0.pkl"
+    #file = "./pickle_trees/fast_acl5_1k_tree.pkl"
+    #file = "./pickle_trees/fw2_1k_nc.pkl"
+    #file = "./pickle_trees/fw4_100k_nc.pkl"
+    file = sys.argv[1]
     with open(file, "rb") as f:
         tree = pickle.load(f)
     with open("./tree_constants.sv", "w") as f:
